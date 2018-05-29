@@ -1,6 +1,6 @@
 # CLLE-Script
 
-Author: Anthony Sciarini ### 
+Author: Anthony Sciarini  
 Version: May 29, 2018
 
 This program will scrape throught the cellosourus portal on expasy.org for cell line cancer patients. The script will pull the 
