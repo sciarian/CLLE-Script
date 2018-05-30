@@ -35,11 +35,17 @@ page = BeautifulSoup(req.content, 'html.parser')
 #	SCRAPE DOC	#
 #########################
 
-#----------------------------------
-#Print all <th> tags using find all
-#----------------------------------
-print 'All table row labels... \n'
+#------------------------------------
+#Print out Synonyms, age, and sex
+#------------------------------------
 
-for row in page.find_all('tr'):
-	print row.th
-	print '\n'	  
+for row in page.find_all('th'):
+	if row.string == 'Cell line name':
+		print row.string
+	if row.string == 'Synonyms':
+		print row.string
+	if row.string == 'Sex of cell':
+		print row.string
+	if row.string == 'Age at sampling':
+		print row.string
+	  
