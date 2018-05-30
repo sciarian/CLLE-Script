@@ -8,8 +8,8 @@
 ###############################################
 
 #IMPORTED LIBS
-import requests		#Used send HTTP request
-import BeautifulSoup	#Used to process HTML documents
+import requests				#Used send HTTP request
+from bs4 import BeautifulSoup	        #Used to process HTML documents
 
 #########################
 #	GET HTML PAGE	#
@@ -19,8 +19,27 @@ import BeautifulSoup	#Used to process HTML documents
 req = requests.request('GET','https://web.expasy.org/cellosaurus/CVCL_1058')
 
 #Grabs the HTML page that came from the HTML page
-page = BeautifulSoup.BeautifulSoup(req.content)
+page = BeautifulSoup(req.content, 'html.parser')
 
-#Prints the page
-print page
+#Prints HTML page
+#print page
 
+###TODO LIST###
+#-GRAB AGE
+#-GRAB GENDER
+#-GRAB RACE
+#-GRAB YEAR ***
+###############
+
+#########################
+#	SCRAPE DOC	#
+#########################
+
+#----------------------------------
+#Print all <th> tags using find all
+#----------------------------------
+print 'All table rows... \n'
+
+for row in page.find_all('tr'):
+	print row
+	print '\n'	  
