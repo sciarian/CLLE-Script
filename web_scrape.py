@@ -38,8 +38,8 @@ page = BeautifulSoup(req.content, 'html.parser')
 #----------------------------------
 #Print all <th> tags using find all
 #----------------------------------
-print 'All table rows... \n'
+print 'All table row labels... \n'
 
 for row in page.find_all('tr'):
-	print row
+	print row.th
 	print '\n'	  
