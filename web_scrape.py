@@ -35,9 +35,9 @@ page = BeautifulSoup(req.content, 'html.parser')
 #	SCRAPE DOC	#
 #########################
 
-#------------------------------------
-#Print out Synonyms, age, and sex
-#------------------------------------
+#--------------------------------------------------------
+#Look up each attribute in the expasy table by table row
+#--------------------------------------------------------
 
 for row in page.find_all('tr'):
 	if str(row.th) != 'None':
