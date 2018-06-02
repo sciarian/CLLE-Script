@@ -18,21 +18,20 @@ import re				#Regular Expression lib
 import csv				#Comma seperated values lib
 from bs4 import BeautifulSoup	        #Process HTML documents lib
 
-
 ##########################################################################################
 #This class contains all the functions needed to scrap cell line info rom html documents.
 ##########################################################################################
 class Cell_scraper:
 
 	#############
-	#Constructor# ~ This guy will take the http URL and convert it to HTML.
+	#Constructor# ~ This guy will take the http URL and grab the HTML page it leads to.
 	#############
 	def __init__(self, url):
 
 		#Make HTTP request
 		req = requests.request('GET', url)
 
-		#Grab the HTML doc that came with request
+		#Grab the HTML that contains the search results for the cell
 		self.results_page = BeautifulSoup(req.content, 'html.parser')
 
 		# ~ Find the first hyper link
@@ -65,10 +64,10 @@ class Cell_scraper:
 def main():
 
 	####################
-	#Acquire Query List#
+	#Acquire URL List#
 	####################
 	
-	###How to look up cell data for cellosaurus by URL!!!
+	###How to look up cell line data for cellosaurus by URL!!!
 	# https://web.expasy.org/cgi-bin/cellosaurus/search?input=your_query	
 
 	#Opening a the cell_lines xcell spread sheet
@@ -92,27 +91,7 @@ def main():
 			print obj.table_look_up('Synonyms')
 			print obj.table_look_up('Sex of cell')
 			print obj.table_look_up('Age at sampling')
-			print '************************************************'		
-
-		#Get info for each cell ~ TODO
-		#
-		#print query_list[0]
-		#print '\n\n'
-		#obj = Cell_scraper(query_list[0])
-		#print obj.page	
-		#
-	 	#link = obj.page.find('tr')
-		#
-		#super_query_template = 'https://web.expasy.org/'			
-		#
-		#better_url = super_query_template + link.a['href']
-		#
-		#Make the req we actually can use!!!
-		#req = requests.request('GET',better_url)
-		#better_page = BeautifulSoup(req.content, 'html.parser')
-	        #	
-		#print better_page
-		
+			print '************************************************'			
 #############
 #Run Program#
 #############				
