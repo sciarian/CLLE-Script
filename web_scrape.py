@@ -52,16 +52,39 @@ class Cell_scraper:
 			if str(row.th) != 'None':
 				if str(row.th.string) == table_row:
 					return row.th.string + ' : ' + row.td.contents[0].string
+		else:
+			return table_row + ' : U' 
 	##########
-	#Function# ~ Find min year in publication section
+	#Function# ~ Find min year in publication section.
 	##########
-	def find_min_pub(self):
-		return 'nothing!'
+	def min_pub_yr(self):	
+		#Search for all years
+		yr_19 = re.findall('\(19\d{2}\)' , str(self.page))
+		yr_20 = re.findall('\(20\d{2}\)' , str(self.page))
+		
+		#Concatinate lists together
+		result = yr_19 + yr_20 
+	
+		#Convert list to string
+		result = map(self.sub_str,result)
+		result = map(int, result)
+
+		#Return result
+		if len(result) is 0:
+			return 'U'
+		else:
+			return min(result)
+
+	##########
+	#Function# ~ sub string function used to remove the parentheses around the years in publication
+	##########   refereneces.
+	def sub_str(self,str):
+		return str[1:len(str)-1]
 	
 	##########
 	#Function# ~ Find the min year in cell line collections TODO
 	##########
-
+	
 	##########
 	#Function# ~ Find the ethinicity in cell line collections TODO
 	##########
@@ -99,6 +122,7 @@ def main():
 			print obj.table_look_up('Synonyms')
 			print obj.table_look_up('Sex of cell')
 			print obj.table_look_up('Age at sampling')
+			print 'Earliest year in occurence : ' + str(obj.min_pub_yr())
 			print '************************************************'			
 #############
 #Run Program#
