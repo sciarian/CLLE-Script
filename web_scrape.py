@@ -53,10 +53,18 @@ class Cell_scraper:
 				if str(row.th.string) == table_row:
 					return row.th.string + ' : ' + row.td.contents[0].string
 	##########
-	#Function# ~ Find min year in pub.
+	#Function# ~ Find min year in publication section
 	##########
-	def find_min_year(self):
-		return 'nothing!'	
+	def find_min_pub(self):
+		return 'nothing!'
+	
+	##########
+	#Function# ~ Find the min year in cell line collections TODO
+	##########
+
+	##########
+	#Function# ~ Find the ethinicity in cell line collections TODO
+	##########
 
 ######
 #Main# ~ Main function.
