@@ -1,4 +1,4 @@
-################################################
+###############################################
 #
 # This program will run a script that will 
 # search for the age, gender, and year of the 
@@ -59,6 +59,9 @@ class Cell_scraper:
 	##########
 	def min_pub_yr(self):	
 		#Search for all years
+
+		#TODO Modify RE to work for (####) and ####
+	
 		yr_19 = re.findall('\(19\d{2}\)' , str(self.page))
 		yr_20 = re.findall('\(20\d{2}\)' , str(self.page))
 		
@@ -68,15 +71,15 @@ class Cell_scraper:
 		#Convert list to string
 		result = map(self.sub_str,result)
 		result = map(int, result)
-
+	
 		#Return result
 		if len(result) is 0:
-			return 'U'
+			return 'Earliest year from pub med : U'
 		else:
-			return min(result)
-
+			return 'Earliest year from pub med : ' + str(min(result))
+	
 	##########
-	#Function# ~ sub string function used to remove the parentheses around the years in publication
+	#Function# ~ Sub string function used to remove the parentheses around the years in publication
 	##########   refereneces.
 	def sub_str(self,str):
 		return str[1:len(str)-1]
@@ -84,21 +87,74 @@ class Cell_scraper:
 	##########
 	#Function# ~ Find the min year in cell line collections TODO
 	##########
-	
+	def min_clc_yr(self):
+		
+		#Grab cell line collections row from expasy page
+		clc = ''
+		for row in self.page.find_all('tr'):
+			if str(row.th) != 'None':
+				if str(row.th.string) == 'Cell line collections':
+					clc = row
+					break
+		
+		if clc == '':
+			return 'Earliest year from cell line collections : U'
+
+		#Append all the hyper links in cell line collections section
+		links = []
+		for link in clc.find_all('a'):
+			print link.string
+			links.append(link['href'])
+
+		#Open each hyper link
+		master_yr_list = []
+		for url in links:
+			try:
+		        	url_req = requests.request('GET', url)
+			except requests.exceptions.SSLError:
+				print 'failed to connect to web page'
+				continue			
+
+       			url_page = BeautifulSoup(url_req.content,'html.parser')
+		        yr_20 = []
+		        yr_19 = []
+
+		        #Scrape for years with regex
+		        for tag in url_page.find_all('span'):
+		     	        yr_19 += re.findall('19\d{2}', str(tag))
+		      	        yr_20 += re.findall('20\d{2}', str(tag))
+
+			#Sum all of the years together
+	       		all_yr = []
+		        all_yr = yr_19 + yr_20
+
+		        #Convert elements of list from string -> int
+	    		map(int, all_yr)
+
+			#Append the minimum year if one exists
+		        if len(all_yr) is not 0 :
+		                master_yr_list.append(min(all_yr))
+
+		#Print over all minimum year
+		if len(master_yr_list) != 0:
+		        return 'Earliest year from cell line collections : ' + min(master_yr_list)
+		else:
+			return 'Earliest year from cell line collections : U'	
+		
 	##########
 	#Function# ~ Find the ethinicity in cell line collections TODO
 	##########
-
-######
+	
+######	
 #Main# ~ Main function.
 ######
 def main():
 
 	####################
-	#Acquire URL List#
+	# Acquire URL List #
 	####################
 	
-	###How to look up cell line data for cellosaurus by URL!!!
+	# How to look up cell line data for cellosaurus by URL!!!
 	# https://web.expasy.org/cgi-bin/cellosaurus/search?input=your_query	
 
 	#Opening a the cell_lines xcell spread sheet
@@ -122,10 +178,28 @@ def main():
 			print obj.table_look_up('Synonyms')
 			print obj.table_look_up('Sex of cell')
 			print obj.table_look_up('Age at sampling')
-			print 'Earliest year in occurence : ' + str(obj.min_pub_yr())
+			print obj.min_pub_yr()
+			print obj.min_clc_yr()
 			print '************************************************'			
 #############
 #Run Program#
 #############				
 if __name__ == '__main__':
 	main()
+
+#TODO - Search for ethnicity of each web page
+#TODO - Find a way to determine what cell line it came from.
+#TODO - Find out why we are getting super low years for when cells were extracted.
+#TODO - Find out how to tab over to history section of ATCC websites.
+	#GET HTML FOR ATTC PAGE AND SEE WHAT HAPPENS!
+	#req = requests.request('GET' , 'https://www.atcc.org/Products/All/CRL-8303.aspx#generalinformation')
+#TODO - Find out how to get year from ACC pages
+	#Cell line with ACC
+
+##############
+#TESTING ZONE#
+##############
+#req = requests.request('GET' , 'https://web.expasy.org/cellosaurus/CVCL_2270')	
+#page = BeautifulSoup(req.content, 'html.parser')
+#print page  
+
