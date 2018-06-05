@@ -85,18 +85,20 @@ class Cell_scraper:
 		return str[1:len(str)-1]
 	
 	##########
-	#Function# ~ Find the min year in cell line collections TODO
+	#Function# ~ Find the min year and ethnicity in cell line collections TODO
 	##########
-	def min_clc_yr(self):
+	def scrape_clc(self):
 		
+		#Return message
+		rtn = ''		
+
 		#Grab cell line collections row from expasy page
 		clc = ''
 		for row in self.page.find_all('tr'):
 			if str(row.th) != 'None':
 				if str(row.th.string) == 'Cell line collections':
 					clc = row
-					break
-		
+					break	
 		if clc == '':
 			return 'Earliest year from cell line collections : U'
 
@@ -105,8 +107,18 @@ class Cell_scraper:
 		for link in clc.find_all('a'):
 			print link.string
 			links.append(link['href'])
+		
+		#Grab min year from publication	
+		rtn += self.grab_min_year(links) 
 
-		#Open each hyper link
+		#Grab the ethncicty from the publication	TODO
+			
+		return rtn
+
+	###########
+	#Functions# ~ Scrape through HTML code for each cell line and grab the years 
+	###########
+	def grab_min_year(self,links):
 		master_yr_list = []
 		for url in links:
 			try:
@@ -119,9 +131,14 @@ class Cell_scraper:
 		        yr_20 = []
 		        yr_19 = []
 
-		        #Scrape for years with regex
+		        #Scrape years from <span> tags
 		        for tag in url_page.find_all('span'):
 		     	        yr_19 += re.findall('19\d{2}', str(tag))
+		      	        yr_20 += re.findall('20\d{2}', str(tag))
+
+			#Scrape years from <dd> tags
+			for tag in url_page.find_all('dd'):
+				yr_19 += re.findall('19\d{2}', str(tag))
 		      	        yr_20 += re.findall('20\d{2}', str(tag))
 
 			#Sum all of the years together
@@ -141,10 +158,26 @@ class Cell_scraper:
 		else:
 			return 'Earliest year from cell line collections : U'	
 		
+	
+
 	##########
 	#Function# ~ Find the ethinicity in cell line collections TODO
 	##########
-	
+	def grab_ethnicity(self,links):
+		ethnicity = ''
+
+		#Types of possible ethinicites for cell lines.
+		categories = ['Caucasian' , 'Chinese' , 'Japanese' , 'Filipino' , 'Korean' , 'Vietnamese' , 'Asian Indian']
+		
+		for url in links:
+			try:
+		        	url_req = requests.request('GET', url)
+			except requests.exceptions.SSLError:
+				print 'failed to connect to web page'
+				continue			
+
+			url_page = BeautifulSoup(url_req.content,'html.parser')
+				
 ######	
 #Main# ~ Main function.
 ######
@@ -179,13 +212,13 @@ def main():
 			print obj.table_look_up('Sex of cell')
 			print obj.table_look_up('Age at sampling')
 			print obj.min_pub_yr()
-			print obj.min_clc_yr()
+			print obj.scrape_clc()
 			print '************************************************'			
 #############
 #Run Program#
 #############				
-if __name__ == '__main__':
-	main()
+#if __name__ == '__main__':
+#	main()
 
 #TODO - Search for ethnicity of each web page
 #TODO - Find a way to determine what cell line it came from.
@@ -199,7 +232,7 @@ if __name__ == '__main__':
 ##############
 #TESTING ZONE#
 ##############
-#req = requests.request('GET' , 'https://web.expasy.org/cellosaurus/CVCL_2270')	
-#page = BeautifulSoup(req.content, 'html.parser')
-#print page  
+req = requests.request('GET' , 'https://www.atcc.org/Products/All/CRL-8303.aspx#generalinformation')
+page = BeautifulSoup(req.content, 'html.parser')
+print page  
 
