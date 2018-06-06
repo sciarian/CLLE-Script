@@ -58,13 +58,11 @@ class Cell_scraper:
 	#Function# ~ Find min year in publication section.
 	##########
 	def min_pub_yr(self):	
-		#Search for all years
 
-		#TODO Modify RE to work for (####) and ####
+		#Search for all years		
+		yr_19 = re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \.]' , str(self.page))
+		yr_20 = re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \.]' , str(self.page))
 	
-		yr_19 = re.findall('\(19\d{2}\)' , str(self.page))
-		yr_20 = re.findall('\(20\d{2}\)' , str(self.page))
-		
 		#Concatinate lists together
 		result = yr_19 + yr_20 
 	
@@ -121,44 +119,57 @@ class Cell_scraper:
 	def grab_min_year(self,links):
 		master_yr_list = []
 		for url in links:
+
+			#Create list to store years
+			yrs = []
+
+			#Switch to history tab if the url is for ATCC
+			if 'www.atcc.org' in url:
+				url.replace('generalinformation' , 'history' , 1)
+
+			#Prevents program from crashing if it opens up a private server.
 			try:
 		        	url_req = requests.request('GET', url)
 			except requests.exceptions.SSLError:
 				print 'failed to connect to web page'
 				continue			
 
+			#Grab HTML from the page, prepare lists for years
        			url_page = BeautifulSoup(url_req.content,'html.parser')
-		        yr_20 = []
-		        yr_19 = []
 
 		        #Scrape years from <span> tags
 		        for tag in url_page.find_all('span'):
-		     	        yr_19 += re.findall('19\d{2}', str(tag))
-		      	        yr_20 += re.findall('20\d{2}', str(tag))
+		     	        yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+		      	        yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
 
 			#Scrape years from <dd> tags
 			for tag in url_page.find_all('dd'):
-				yr_19 += re.findall('19\d{2}', str(tag))
-		      	        yr_20 += re.findall('20\d{2}', str(tag))
+				yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+		      	        yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
 
-			#Sum all of the years together
-	       		all_yr = []
-		        all_yr = yr_19 + yr_20
+			#Scrape years from <p> tags
+			for tag in url_page.find_all('p'):
+				yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+		      	        yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+			
+			#Scrape years from <td> tags
+			for tag in url_page.find_all('td'):
+                                yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+                                yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
 
 		        #Convert elements of list from string -> int
-	    		map(int, all_yr)
+			yrs = map(self.sub_str, yrs)  			
+			yrs = map(int, yrs)
 
 			#Append the minimum year if one exists
-		        if len(all_yr) is not 0 :
-		                master_yr_list.append(min(all_yr))
+		        if len(yrs) is not 0 :
+		                master_yr_list.append(min(yrs))
 
 		#Print over all minimum year
 		if len(master_yr_list) != 0:
-		        return 'Earliest year from cell line collections : ' + min(master_yr_list)
+		        return 'Earliest year from cell line collections : ' + str(min(master_yr_list))
 		else:
 			return 'Earliest year from cell line collections : U'	
-		
-	
 
 	##########
 	#Function# ~ Find the ethinicity in cell line collections TODO
@@ -176,8 +187,7 @@ class Cell_scraper:
 				print 'failed to connect to web page'
 				continue			
 
-			url_page = BeautifulSoup(url_req.content,'html.parser')
-				
+			url_page = BeautifulSoup(url_req.content,'html.parser')				
 ######	
 #Main# ~ Main function.
 ######
@@ -202,7 +212,7 @@ def main():
 
 		#Make a query for each cell line and add it to the query list
 		for row in reader:
-         		query_list.append(query_url + row['Cell line primary name'])
+                	query_list.append(query_url + row['Cell line primary name'])
 
 		#Print basic info for each cell
 		for query in query_list:
@@ -217,22 +227,16 @@ def main():
 #############
 #Run Program#
 #############				
-#if __name__ == '__main__':
-#	main()
+if __name__ == '__main__':
+	main()
 
 #TODO - Search for ethnicity of each web page
 #TODO - Find a way to determine what cell line it came from.
-#TODO - Find out why we are getting super low years for when cells were extracted.
-#TODO - Find out how to tab over to history section of ATCC websites.
-	#GET HTML FOR ATTC PAGE AND SEE WHAT HAPPENS!
-	#req = requests.request('GET' , 'https://www.atcc.org/Products/All/CRL-8303.aspx#generalinformation')
-#TODO - Find out how to get year from ACC pages
-	#Cell line with ACC
+#UTLIMATE TODO! - Make sure we can retreive data from all cell line websites
+	#check out the JCR#### cell line collections 
 
 ##############
 #TESTING ZONE#
 ##############
-req = requests.request('GET' , 'https://www.atcc.org/Products/All/CRL-8303.aspx#generalinformation')
-page = BeautifulSoup(req.content, 'html.parser')
-print page  
-
+#req = requests.request('GET' , 'http://cellbank.nibiohn.go.jp//~cellbank/en/search_res_det.cgi?RNO=JCRB0061')
+#page = BeautifulSoup(req.content, 'html.parser')
