@@ -107,7 +107,7 @@ class Cell_scraper:
 			links.append(link['href'])
 		
 		#Grab min year from publication	
-		rtn += self.grab_min_year(links) 
+		rtn += self.grab_min_year_and_ethnicity(links) 
 
 		#Grab the ethncicty from the publication	TODO
 			
@@ -116,13 +116,16 @@ class Cell_scraper:
 	###########
 	#Functions# ~ Scrape through HTML code for each cell line and grab the years 
 	###########
-	def grab_min_year(self,links):
+	def grab_min_year_and_ethnicity(self,links):
 		master_yr_list = []
 		for url in links:
-
-			#Create list to store years
-			yrs = []
 			
+			#############################
+			#Grab min year and Ethnicity#
+			#############################
+			#Create list to store years and a String to store the ethnicity#
+			yrs = []
+			ethnicity = 'NA'
 
 			#Skip Cell line collections that have no useful information
 			bad_url = ['en.pasteur.ac' , 'clsgmbh' , 'ibvr.org' , 'kcb.kiz' , 'cellbank.snu.ac.kr' , 'brc.riken' , 'coriell.org' , 
@@ -158,31 +161,35 @@ class Cell_scraper:
 			        for tag in url_page.find_all('span'):
 			     	        yrs += re.findall('[ ^ ,  \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
 			                yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-
+					ethnicity = self.grab_ethnicity(tag)
+					
 			#Scrape years from <dd> tags
 			if 'dsmz.de/catalogues' in url:
 				for tag in url_page.find_all('dd'):
 					yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
 			      	        yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-		
+					ethnicity = self.grab_ethnicity(tag)
+					
 			#Scrape years from <p> tags	
 			if 'www.atcc.org' in url or 'www.addexbio.com' in url:
 				for tag in url_page.find_all('p'):
 					yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
 			  		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-		
+					ethnicity = self.grab_ethnicity(tag)
+					
 			#scrape years from <td> tags
 			if 'catalog.bcrc.firdi.org' in url or 'iclc.it/details' in url or 'http://cellbank.nibiohn.go.jp' in url or 'idac.tohoku.ac' in url:	
 				for tag in url_page.find_all('td'):
                        		   	yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
                                		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-						
+					ethnicity = self.grab_ethnicity(tag)
+					
 			#scrape years from <div> tags
 			if 'http://bcrj.org.br' in url:
 				for tag in url_page.find_all('div'):
                        		   	yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
                                		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-
+					ethnicity = self.grab_ethnicity(tag)
 	
 
 		        #Convert elements of list from string -> int
@@ -192,30 +199,29 @@ class Cell_scraper:
 			#Append the minimum year if one exists
 		        if len(yrs) is not 0 :
 		                master_yr_list.append(min(yrs))
-
+				
+			####################
+			#GRAB THE ETHNICITY#		TODO ~ Add string with ethnicity seperated with comma to the end of 
+			####################		       return string. ex: 1900 , Caucasian
+			
 		#Print over all minimum year
 		if len(master_yr_list) != 0:
-		        return str(min(master_yr_list))
+		        return str(min(master_yr_list)) + ',' + ethnicity
 		else:
-			return 'NA'	
+			return 'NA' + ',' + ethnicity	
 
 	##########
-	#Function# ~ Find the ethinicity in cell line collections TODO
+	#Function# ~ Find the ethinicity in cell line collections TEST
 	##########
-	def grab_ethnicity(self,links):
-		ethnicity = ''
-
+	def grab_ethnicity(self,tag):
 		#Types of possible ethinicites for cell lines.
 		categories = ['Caucasian' , 'Chinese' , 'Japanese' , 'Filipino' , 'Korean' , 'Vietnamese' , 'Asian Indian']
 		
-		for url in links:
-			try:
-		        	url_req = requests.request('GET', url)
-			except requests.exceptions.SSLError:
-				print 'failed to connect to web page'
-				continue			
-
-			url_page = BeautifulSoup(url_req.content,'html.parser')				
+		#Check if the tag contains the ethnicity
+		for ethnicity in categorie:
+			if tag.conatins(ethnicity)
+				return ethnicity
+		return 'NA'
 ######	
 #Main# ~ Main function.
 ######
