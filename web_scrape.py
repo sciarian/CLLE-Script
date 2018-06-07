@@ -96,9 +96,10 @@ class Cell_scraper:
 			if str(row.th) != 'None':
 				if str(row.th.string) == 'Cell line collections':
 					clc = row
-					break	
+					break
+		#If no cell pages return NA for min cell year and ethnicity	
 		if clc == '':
-			return 'NA'
+			return 'NA,NA'
 
 		#Append all the hyper links in cell line collections section
 		links = []
@@ -109,8 +110,6 @@ class Cell_scraper:
 		#Grab min year from publication	
 		rtn += self.grab_min_year(links) 
 
-		#Grab the ethncicty from the publication	TODO
-			
 		return rtn
 
 	###########
@@ -200,7 +199,7 @@ class Cell_scraper:
 			return 'NA'	
 
 	##########
-	#Function# ~ Find the ethinicity in cell line collections TODO
+	#Function# ~ Find the ethinicity in cell line collections TEST
 	##########
 	def grab_ethnicity(self,links):
 		ethnicity = ''
@@ -262,7 +261,7 @@ def main():
 if __name__ == '__main__':
 	main()
 
-#TODO - Search for ethnicity of each web page
+#TEST - Search for ethnicity of each web page
 	#Make a regex for each possible ethnicity
 #TODO - Find a way to determine what cell line it came from.
 	#Use a dictionary some how...
