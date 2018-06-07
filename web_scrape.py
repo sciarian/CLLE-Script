@@ -51,9 +51,9 @@ class Cell_scraper:
 		for row in self.page.find_all('tr'):
 			if str(row.th) != 'None':
 				if str(row.th.string) == table_row:
-					return row.th.string + ' : ' + row.td.contents[0].string
+					return row.td.contents[0].string
 		else:
-			return table_row + ' : U' 
+			return 'NA' 
 	##########
 	#Function# ~ Find min year in publication section.
 	##########
@@ -72,9 +72,9 @@ class Cell_scraper:
 	
 		#Return result
 		if len(result) is 0:
-			return 'Earliest year from pub med : U'
+			return 'NA'
 		else:
-			return 'Earliest year from pub med : ' + str(min(result))
+			return str(min(result))
 	
 	##########
 	#Function# ~ Sub string function used to remove the parentheses around the years in publication
@@ -98,12 +98,12 @@ class Cell_scraper:
 					clc = row
 					break	
 		if clc == '':
-			return 'Earliest year from cell line collections : U'
+			return 'NA'
 
 		#Append all the hyper links in cell line collections section
 		links = []
 		for link in clc.find_all('a'):
-			print link.string
+			#print link.string
 			links.append(link['href'])
 		
 		#Grab min year from publication	
@@ -122,40 +122,68 @@ class Cell_scraper:
 
 			#Create list to store years
 			yrs = []
+			
 
-			#Switch to history tab if the url is for ATCC
-			if 'www.atcc.org' in url:
-				url.replace('generalinformation' , 'history' , 1)
+			#Skip Cell line collections that have no useful information
+			bad_url = ['en.pasteur.ac' , 'clsgmbh' , 'ibvr.org' , 'kcb.kiz' , 'cellbank.snu.ac.kr' , 'brc.riken' , 'coriell.org' , 
+				  'www.fli.de/en/services' , 'dtp.cancer.gov']
+                        is_bad = False
 
+			#Loop through list of bad urls
+			for url_str in bad_url:
+				#If this is a bad url then flip url flag
+				if url_str in url:
+					is_bad = True
+					break
+
+			#If bad url flag was tripped then skip to the end of the loop.
+			if is_bad is True:
+				continue
+			
 			#Prevents program from crashing if it opens up a private server.
 			try:
 		        	url_req = requests.request('GET', url)
 			except requests.exceptions.SSLError:
-				print 'failed to connect to web page'
+				#print 'failed to connect to web page'
 				continue			
 
 			#Grab HTML from the page, prepare lists for years
        			url_page = BeautifulSoup(url_req.content,'html.parser')
 
+			#Depending on the cell line collection, search ONLY in the tags where years related to cell
+			#line can be found.
+
 		        #Scrape years from <span> tags
-		        for tag in url_page.find_all('span'):
-		     	        yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
-		      	        yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+			if 'www.phe-culturecollections.org' in url:
+			        for tag in url_page.find_all('span'):
+			     	        yrs += re.findall('[ ^ ,  \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+			                yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
 
 			#Scrape years from <dd> tags
-			for tag in url_page.find_all('dd'):
-				yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
-		      	        yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+			if 'dsmz.de/catalogues' in url:
+				for tag in url_page.find_all('dd'):
+					yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+			      	        yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+		
+			#Scrape years from <p> tags	
+			if 'www.atcc.org' in url or 'www.addexbio.com' in url:
+				for tag in url_page.find_all('p'):
+					yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+			  		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+		
+			#scrape years from <td> tags
+			if 'catalog.bcrc.firdi.org' in url or 'iclc.it/details' in url or 'http://cellbank.nibiohn.go.jp' in url or 'idac.tohoku.ac' in url:	
+				for tag in url_page.find_all('td'):
+                       		   	yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+                               		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+						
+			#scrape years from <div> tags
+			if 'http://bcrj.org.br' in url:
+				for tag in url_page.find_all('div'):
+                       		   	yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
+                               		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
 
-			#Scrape years from <p> tags
-			for tag in url_page.find_all('p'):
-				yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
-		      	        yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
-			
-			#Scrape years from <td> tags
-			for tag in url_page.find_all('td'):
-                                yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \. , ; ]' , str(tag))
-                                yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \. , ; ]' , str(tag))
+	
 
 		        #Convert elements of list from string -> int
 			yrs = map(self.sub_str, yrs)  			
@@ -167,9 +195,9 @@ class Cell_scraper:
 
 		#Print over all minimum year
 		if len(master_yr_list) != 0:
-		        return 'Earliest year from cell line collections : ' + str(min(master_yr_list))
+		        return str(min(master_yr_list))
 		else:
-			return 'Earliest year from cell line collections : U'	
+			return 'NA'	
 
 	##########
 	#Function# ~ Find the ethinicity in cell line collections TODO
@@ -201,7 +229,7 @@ def main():
 	# https://web.expasy.org/cgi-bin/cellosaurus/search?input=your_query	
 
 	#Opening a the cell_lines xcell spread sheet
-	with open('cell_lines.csv') as csvfile:
+	with open('lung_cells.csv') as csvfile:
 		reader = csv.DictReader(csvfile)
 		
 		#Query template
@@ -217,13 +245,17 @@ def main():
 		#Print basic info for each cell
 		for query in query_list:
 			obj = Cell_scraper(query)
-			print obj.table_look_up('Cell line name')
-			print obj.table_look_up('Synonyms')
-			print obj.table_look_up('Sex of cell')
-			print obj.table_look_up('Age at sampling')
-			print obj.min_pub_yr()
-			print obj.scrape_clc()
-			print '************************************************'			
+
+			#Print out in csv format
+			print obj.table_look_up('Cell line name') + ',' + obj.table_look_up('Synonyms') + ',' + obj.table_look_up('Sex of cell') + ',' + obj.table_look_up('Age at sampling') + ',' + obj.min_pub_yr() + ',' + obj.scrape_clc() 
+
+			#print obj.table_look_up('Cell line name')
+			#print obj.table_look_up('Synonyms')
+			#print obj.table_look_up('Sex of cell')
+			#print obj.table_look_up('Age at sampling')
+			#print obj.min_pub_yr()
+			#print obj.scrape_clc()
+			#print '************************************************'			
 #############
 #Run Program#
 #############				
@@ -231,12 +263,19 @@ if __name__ == '__main__':
 	main()
 
 #TODO - Search for ethnicity of each web page
+	#Make a regex for each possible ethnicity
 #TODO - Find a way to determine what cell line it came from.
+	#Use a dictionary some how...
 #UTLIMATE TODO! - Make sure we can retreive data from all cell line websites
-	#check out the JCR#### cell line collections 
+	#Make a list of all cell lines and note what HTML tags the years are contained in.
+	#Make sure to only search through those tags for that cell line. This will improve speed and reduce chances of
+	#picking up a date unrealted to the cell line. 
 
 ##############
 #TESTING ZONE#
-##############
-#req = requests.request('GET' , 'http://cellbank.nibiohn.go.jp//~cellbank/en/search_res_det.cgi?RNO=JCRB0061')
+##############                  
+#req = requests.request('GET' , 'http://bcrj.org.br/catalogo/cell/?celula=0311')
 #page = BeautifulSoup(req.content, 'html.parser')
+ 
+#print page
+
