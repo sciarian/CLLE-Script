@@ -113,11 +113,19 @@ class Cell_scraper:
 	
 		return rtn
 
-		
-	#Funciton#				TODO REFACTOR YEAR SEARCHING CODE IT IS GETTING OUT OF WACK
-	def search_for_year(self):
-		return 'NOTHING'
-
+	##########	
+	#Function#				TODO REFACTOR YEAR SEARCHING CODE IT IS GETTING OUT OF WACK
+	##########
+	def grab_years(self , tag_type , url_page):
+		yrs = []
+		for tag in url_page.find_all(tag_type)
+			#Convert HTML to unicode then back to ascii form to filter out any unreadable characters				
+			tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
+			   	
+			#Use regex to search through each HTML tag for years
+			yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+			yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , tag_str)
+		return yrs
 
 	###########
 	#Functions# ~ Scrape through HTML code for each cell line and grab the years 
@@ -156,7 +164,7 @@ class Cell_scraper:
 			try:
 		        	url_req = requests.request('GET', url)
 			except requests.exceptions.SSLError:
-				#print 'failed to connect to web page'
+				#'failed to connect to web page'
 				continue			
 
 			#Grab HTML from the page, prepare lists for years
@@ -167,69 +175,44 @@ class Cell_scraper:
 
 		        #Scrape years from <span> tags
 			if 'www.phe-culturecollections.org' in url:
-			        for tag in url_page.find_all('span'):
-					#Convert HTML to unicode then back to ascii form to filter out any unreadable characters				
-				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
-			     	
-					#Use regex to search through each HTML tag for years
-				        yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
-			                yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , tag_str)
-				
-					#Search for ethnicity
-					ethnicity = self.grab_ethnicity(tag,ethnicity)
+				#Search for years
+				yrs += self.grab_years('span' , url_page)	
+					
+				#Search for ethnicity
+				ethnicity = self.grab_ethnicity('span' , url_page , ethnicity)
 					
 			#Scrape years from <dd> tags
 			if 'dsmz.de/catalogues' in url:
-				for tag in url_page.find_all('dd'):
-					#Convert HTML to unicode and then back to ascii form to filter out any unreadable characters
-				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
-				
-					#Use regex to search through each HTML tag for years
-					yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
-			      	        yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
-				
-					#Search for ethnicity
-					ethnicity = self.grab_ethnicity(tag,ethnicity)
+				#Search for years
+				yrs += self.grab_years('dd' , url_page)	
+					
+				#Search for ethnicity
+				ethnicity = self.grab_ethnicity('dd' , url_page , ethnicity)
 					
 			#Scrape years from <p> tags	
 			if 'www.atcc.org' in url or 'www.addexbio.com' in url:
-				for tag in url_page.find_all('p'):
-        				#Convert HTML to unicode and then back to ascii to filter out any bad characters
-					tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
-				
-					#Use regex to search through each HTML tag for years
-					yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
-			  		yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
-				
-					#Search for ethnicity
-					ethnicity = self.grab_ethnicity(tag,ethnicity)
+				#Search for years
+				yrs += self.grab_years('p' , url_page)	
+					
+				#Search for ethnicity
+				ethnicity = self.grab_ethnicity('p' , url_page , ethnicity)
 					
 			#scrape years from <td> tags
 			if 'catalog.bcrc.firdi.org' in url or 'iclc.it/details' in url or 'http://cellbank.nibiohn.go.jp' in url or 'idac.tohoku.ac' in url:	
-				for tag in url_page.find_all('td'):
-                       			#Convert HTML to unicode and then back to ascii to filter out any bad characters
-				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
-
-					#Use regex to search through each HTML tag for years
-				   	yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
-                               		yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+				#Search for years
+				yrs += self.grab_years('td' , url_page)	
 					
-					#Search for ethnicity
-					ethnicity = self.grab_ethnicity(tag,ethnicity)
+				#Search for ethnicity
+				ethnicity = self.grab_ethnicity('td' , url_page , ethnicity)
 					
 			#scrape years from <div> tags
 			if 'http://bcrj.org.br' in url:
-				for tag in url_page.find_all('div'):
-					#Convert HTML to unicode and then back to ascii to filter out any bad characters
-				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
-			
-					#Use regex to search each HTML tag for years
-                       		   	yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
-                               		yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+				#Search for years
+				yrs += self.grab_years('div' , url_page)	
 					
-					#Search for ethnicity
-					ethnicity = self.grab_ethnicity(tag,ethnicity)
-
+				#Search for ethnicity
+				ethnicity = self.grab_ethnicity(tag,ethnicity)			
+				
 		        #Convert elements of list from string -> int
 			yrs = map(self.sub_str, yrs)  			
 			yrs = map(int, yrs)
@@ -252,9 +235,9 @@ class Cell_scraper:
 			return 'NA' + ',' + ethnicity	
 
 	##########
-	#Function# ~ Find the ethinicity in cell line collections TEST
+	#Function# ~ TODO make this like the grab_years function
 	##########
-	def grab_ethnicity(self,tag,cell_eth):
+	def grab_ethnicity(self,tag_type,url_page,cell_eth):
 		#Types of possible ethinicites for cell lines.
 		categories = ['Caucasian' , 'caucasian' , 'Chinese' ,'chinese' , 'Japanese' , 'japanese' , 
 			      'Filipino' , 'filipino' , 'Korean' , 'korean' , 'Vietnamese', 'vietnamese',
@@ -315,7 +298,7 @@ def main():
 if __name__ == '__main__':
 	main()
 
-#ENHANCE! - Search for ethnicity of each web page
+#TODO - Search for ethnicity of each web page
 	#Make a regex for each possible ethnicity
 #TODO - Find a way to determine what cell line it came from.
 	#Use a dictionary some how...
