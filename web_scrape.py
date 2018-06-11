@@ -13,6 +13,7 @@
 #IMPORTED LIBS#
 ###############
 import sys				#System commands lib
+import unicodedata			#Unicode lib
 import requests				#HTTP request lib
 import re				#Regular Expression lib
 import csv				#Comma seperated values lib
@@ -109,22 +110,31 @@ class Cell_scraper:
 		
 		#Grab min year from publication	
 		rtn += self.grab_min_year_and_ethnicity(links) 
-
+	
 		return rtn
+
+		
+	#Funciton#				TODO REFACTOR YEAR SEARCHING CODE IT IS GETTING OUT OF WACK
+	def search_for_year(self):
+		return 'NOTHING'
+
 
 	###########
 	#Functions# ~ Scrape through HTML code for each cell line and grab the years 
 	###########
 	def grab_min_year_and_ethnicity(self,links):
 		master_yr_list = []
+		ethnicity = 'NA'
 		for url in links:
+		
+			#Print url for testing	
+			print url
 			
 			#############################
 			#Grab min year and Ethnicity#
 			#############################
 			#Create list to store years and a String to store the ethnicity#
 			yrs = []
-			ethnicity = 'NA'
 
 			#Skip Cell line collections that have no useful information
 			bad_url = ['en.pasteur.ac' , 'clsgmbh' , 'ibvr.org' , 'kcb.kiz' , 'cellbank.snu.ac.kr' , 'brc.riken' , 'coriell.org' , 
@@ -158,42 +168,74 @@ class Cell_scraper:
 		        #Scrape years from <span> tags
 			if 'www.phe-culturecollections.org' in url:
 			        for tag in url_page.find_all('span'):
-			     	        yrs += re.findall('[ ^ ,  \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-			                yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-					ethnicity = self.grab_ethnicity(tag)
+					#Convert HTML to unicode then back to ascii form to filter out any unreadable characters				
+				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
+			     	
+					#Use regex to search through each HTML tag for years
+				        yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+			                yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , tag_str)
+				
+					#Search for ethnicity
+					ethnicity = self.grab_ethnicity(tag,ethnicity)
 					
 			#Scrape years from <dd> tags
 			if 'dsmz.de/catalogues' in url:
 				for tag in url_page.find_all('dd'):
-					yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-			      	        yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-					ethnicity = self.grab_ethnicity(tag)
+					#Convert HTML to unicode and then back to ascii form to filter out any unreadable characters
+				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
+				
+					#Use regex to search through each HTML tag for years
+					yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+			      	        yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+				
+					#Search for ethnicity
+					ethnicity = self.grab_ethnicity(tag,ethnicity)
 					
 			#Scrape years from <p> tags	
 			if 'www.atcc.org' in url or 'www.addexbio.com' in url:
 				for tag in url_page.find_all('p'):
-					yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-			  		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-					ethnicity = self.grab_ethnicity(tag)
+        				#Convert HTML to unicode and then back to ascii to filter out any bad characters
+					tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
+				
+					#Use regex to search through each HTML tag for years
+					yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+			  		yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+				
+					#Search for ethnicity
+					ethnicity = self.grab_ethnicity(tag,ethnicity)
 					
 			#scrape years from <td> tags
 			if 'catalog.bcrc.firdi.org' in url or 'iclc.it/details' in url or 'http://cellbank.nibiohn.go.jp' in url or 'idac.tohoku.ac' in url:	
 				for tag in url_page.find_all('td'):
-                       		   	yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-                               		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-					ethnicity = self.grab_ethnicity(tag)
+                       			#Convert HTML to unicode and then back to ascii to filter out any bad characters
+				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
+
+					#Use regex to search through each HTML tag for years
+				   	yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+                               		yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+					
+					#Search for ethnicity
+					ethnicity = self.grab_ethnicity(tag,ethnicity)
 					
 			#scrape years from <div> tags
 			if 'http://bcrj.org.br' in url:
 				for tag in url_page.find_all('div'):
-                       		   	yrs += re.findall('[ ^ , \( , ' ' ]19\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-                               		yrs += re.findall('[ ^ , \( , ' ' ]20\d{2}[ \) , \( , ' ' , \. , ; , $ ]' , str(tag))
-					ethnicity = self.grab_ethnicity(tag)
-	
+					#Convert HTML to unicode and then back to ascii to filter out any bad characters
+				        tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')
+			
+					#Use regex to search each HTML tag for years
+                       		   	yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+                               		yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
+					
+					#Search for ethnicity
+					ethnicity = self.grab_ethnicity(tag,ethnicity)
 
 		        #Convert elements of list from string -> int
 			yrs = map(self.sub_str, yrs)  			
 			yrs = map(int, yrs)
+
+			#Print years fro testing
+			print yrs
 
 			#Append the minimum year if one exists
 		        if len(yrs) is not 0 :
@@ -212,15 +254,19 @@ class Cell_scraper:
 	##########
 	#Function# ~ Find the ethinicity in cell line collections TEST
 	##########
-	def grab_ethnicity(self,tag):
+	def grab_ethnicity(self,tag,cell_eth):
 		#Types of possible ethinicites for cell lines.
-		categories = ['Caucasian' , 'Chinese' , 'Japanese' , 'Filipino' , 'Korean' , 'Vietnamese' , 'Asian Indian']
+		categories = ['Caucasian' , 'caucasian' , 'Chinese' ,'chinese' , 'Japanese' , 'japanese' , 
+			      'Filipino' , 'filipino' , 'Korean' , 'korean' , 'Vietnamese', 'vietnamese',
+			      'African American' , 'african american']
 		
 		#Check if the tag contains the ethnicity
-		for ethnicity in categorie:
-			if tag.conatins(ethnicity)
-				return ethnicity
-		return 'NA'
+		if cell_eth == 'NA':	
+			for ethnicity in categories:
+				if ethnicity in str(tag):
+					cell_eth = ethnicity
+		return cell_eth
+	
 ######	
 #Main# ~ Main function.
 ######
@@ -232,6 +278,9 @@ def main():
 	
 	# How to look up cell line data for cellosaurus by URL!!!
 	# https://web.expasy.org/cgi-bin/cellosaurus/search?input=your_query	
+
+	#Print out the column titles in csv format
+	#print 'Cell.line.name,Synonyms,Sex,Age,Minimun.pub.med.year,Minimum.cell.line.collection.year,Ethnicity'
 
 	#Opening a the cell_lines xcell spread sheet
 	with open('lung_cells.csv') as csvfile:
@@ -250,24 +299,23 @@ def main():
 		#Print basic info for each cell
 		for query in query_list:
 			obj = Cell_scraper(query)
-
 			#Print out in csv format
-			print obj.table_look_up('Cell line name') + ',' + obj.table_look_up('Synonyms') + ',' + obj.table_look_up('Sex of cell') + ',' + obj.table_look_up('Age at sampling') + ',' + obj.min_pub_yr() + ',' + obj.scrape_clc() 
+			#print obj.table_look_up('Cell line name') + ',' + obj.table_look_up('Synonyms') + ',' + obj.table_look_up('Sex of cell') + ',' + obj.table_look_up('Age at sampling') + ',' + obj.min_pub_yr() + ',' + obj.scrape_clc() 
 
-			#print obj.table_look_up('Cell line name')
-			#print obj.table_look_up('Synonyms')
-			#print obj.table_look_up('Sex of cell')
-			#print obj.table_look_up('Age at sampling')
-			#print obj.min_pub_yr()
-			#print obj.scrape_clc()
-			#print '************************************************'			
+			print obj.table_look_up('Cell line name')
+			print obj.table_look_up('Synonyms')
+			print obj.table_look_up('Sex of cell')
+			print obj.table_look_up('Age at sampling')
+			print obj.min_pub_yr()
+			print obj.scrape_clc()
+			print '************************************************'			
 #############
 #Run Program#
 #############				
 if __name__ == '__main__':
 	main()
 
-#TEST - Search for ethnicity of each web page
+#ENHANCE! - Search for ethnicity of each web page
 	#Make a regex for each possible ethnicity
 #TODO - Find a way to determine what cell line it came from.
 	#Use a dictionary some how...
@@ -279,8 +327,19 @@ if __name__ == '__main__':
 ##############
 #TESTING ZONE#
 ##############                  
-#req = requests.request('GET' , 'http://bcrj.org.br/catalogo/cell/?celula=0311')
+#req = requests.request('GET' , 'http://cellbank.nibiohn.go.jp//~cellbank/en/search_res_det.cgi?RNO=JCRB0815')
 #page = BeautifulSoup(req.content, 'html.parser')
- 
-#print page
+
+#lst = []
+
+#for tag in page.find_all('td'):
+#	tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')	
+#	print tag_str
+
+#	lst += re.findall('[ ^ , \( , \s , > ]19\d{2}[ \) , \s , \. , ; , \Z , <]' , str(tag_str))
+#	lst += re.findall('[ ^ , \( , \s , > ]20\d{2}[ \) , \s , \. , ; , \Z , <]' , str(tag_str))
+
+
+#print lst
+
 
