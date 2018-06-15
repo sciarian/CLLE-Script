@@ -1,13 +1,13 @@
-###############################################
+##########################################################
 #
 # This program will run a script that will 
 # search for the age, gender, and year of the 
-# earliest mention of a cell line. 
+# earliest mention of a cell line on the Expasy Database. 
 #
 # @Author: Anthony Sciarini
 # @Version: 5/31/2018
 #
-################################################
+##########################################################
 
 ###############
 #IMPORTED LIBS#
@@ -19,14 +19,31 @@ import re				#Regular Expression lib
 import csv				#Comma seperated values lib
 from bs4 import BeautifulSoup	        #Process HTML documents lib
 
-##########################################################################################
-#This class contains all the functions needed to scrap cell line info rom html documents.
-##########################################################################################
+#############################################################################################
+#
+# This class contains the functions needed to use a script to search through HTML documents 
+# retrived via the Expasy database for cancer cell line, and to grab various data about the 
+# cell ine such as: Primary name, Aliases, Year of origin, Age of the individual the cells 
+# were taken from, and the Ethnicity. If any of the previously mentioned data was not 
+# available then the script will return 'NA'. When the script is run it opens a csv document
+# containing all of the cell ine names and then uses that with a url qury template for the
+# expasy database to search for each cell line on the database and grab whatever data is
+# available for the cell line. 
+#
+# @Author Anthony Sciarin
+# @Version 6/15/2018
+#
+############################################################################################
 class Cell_scraper:
 
-	#############
-	#Constructor# ~ This guy will take the http URL and grab the HTML page it leads to.
-	#############
+	#####################################################################################
+	# 
+	# The constructor of this class takes a string containing the url to search for the
+	# the cell line on the expasy database. The first link in the result of that search
+	# is then chosen to have data retrieved from. If no results are returned then 'NA'
+	# is returned for all data and the year is set to zero.
+	# 
+	####################################################################################
 	def __init__(self, url):
 
 		#Make HTTP request
@@ -35,23 +52,34 @@ class Cell_scraper:
 		#Grab the HTML that contains the search results for the cell
 		self.results_page = BeautifulSoup(req.content, 'html.parser')
 
-		# ~ Find the first hyper link if it exists
+		#Find the first hyper link if it exists
 		first_link = self.results_page.find('tr')
-
+		
+                #If the search was successful then a web page for the cell line on the expasy database was found.
+		#The variable self.page_found is set to be True, meaning that we will be able to use all of the 
+		#functions for grabbing information that this class has to offer. 
 		if str(first_link) != 'None':				
 			next_url = 'https://web.expasy.org/' + first_link.a['href']		
 			# ~ Get HTML page that the first hyper link leads to.
 			req = requests.request('GET', next_url)		
 			self.page = BeautifulSoup(req.content, 'html.parser')
-			self.connection = True
+			self.page_found = True
+	
+		#If no results came back then no page was found. self.page_found gets set to False, meaning none
+		#of the functions for grabbing data can be used.
 		else:
-			self.connection = False
+			self.page_found = False
 
-	#########				
-	#Funtion# ~ Look up the content stored at a table row.
-	#########
+	#########################################################################################				
+	# 
+	# If a page for the cell line was found, this function looks up data stored in the table 
+	# the table that expasy organizes all the data for the cell line in.
+	#
+	# @Return A string containing the data if it is available, otherwise it returns 'NA'.
+        #
+	########################################################################################
 	def table_look_up(self, table_row):	
-		if self.connection == True:	
+		if self.page_found == True:	
 			#Loop through each row in the page's table
 			for row in self.page.find_all('tr'):
 				if str(row.th) != 'None':
@@ -61,42 +89,55 @@ class Cell_scraper:
 				return 'NA'
 		else:
 			return 'NA'
- 
-	##########
-	#Function# ~ Find min year in publication section.
-	##########
-	def min_pub_yr(self):	
-		if self.connection == True:
-			#Search for all years		
-			yr_19 = re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \.]' , str(self.page))
-			yr_20 = re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \.]' , str(self.page))
-	
-			#Concatinate lists together
-			result = yr_19 + yr_20 
 		
-			#Convert list to string
-			result = map(self.sub_str,result)
-			result = map(int, result)
+	######################################################################################################
+        #
+	# If a page for the cell line was found, this function grabs all of the years (If available) from 
+        # the publication section of the expasy database and returns the earliest year from the 
+        # publications section.
+        # 
+        # @Return A string containing the lowest year from the publication section, otherwise it returns 'NA'
+        #        
+	######################################################################################################
+
+	def min_pub_yr(self):	
+		if self.page_found == True:
+			#Search for all years in the publication page
+			yrs = []		
+			yrs += re.findall('[ \( , ' ' ]19\d{2}[\) , ' ' , \.]' , str(self.page))
+			yrs += re.findall('[ \( , ' ' ]20\d{2}[\) , ' ' , \.]' , str(self.page))
 	
-			#Return result
-			if len(result) is 0:
+			#Convert list to string
+			yrs = map(self.sub_str, yrs)
+			yrs = map(int, yrs)
+	
+			#Return the samllest year
+			if len(yrs) is 0:	#If no years were found print NA
 				return 'NA'
-			else:
-				return str(min(result))
+			else:			#Else return all of the years
+				return str(min(yrs))
 		else:
 			return 'NA'
-	##########
-	#Function# ~ Sub string function used to remove the parentheses around the years in publication
-	##########   refereneces.
+	
+	############################################################################################################
+	#
+	# This is a helper function used to remove the characers surrounding years found by the regular expression
+	# used to find all of the years. It returns said modified string. This funcion is used as a lambda function		TODO: CHANGE NAME TO string_trimmer.
+	# along with map() function to gracefully removes the non digit characters years returned from the regular 
+	# expressions to find years so they can be converted into integers with the int() and map() functions 
+	# and compared so the minimum year cab be found with the min() function.
+        #
+	# @Return A string with the first and last character removed
+	# 
+	############################################################################################################
 	def sub_str(self,str):
 		return str[1:len(str)-1]
 	
 	##########
-	#Function# ~ Find the min year and ethnicity in cell line collections TODO
-	##########
-	def scrape_clc(self):
-		
-		if self.connection == True:		
+	#Function# ~ This function grabs the list of urls of the cell line collections that have this cell line in there collection 
+	##########   
+	def search_cell_line_collections(self):
+		if self.page_found == True:		
 			#Return message
 			rtn = ''		
 	
@@ -107,6 +148,7 @@ class Cell_scraper:
 					if str(row.th.string) == 'Cell line collections':
 						clc = row
 						break
+
 			#If no cell pages return NA for min cell year and ethnicity	
 			if clc == '':
 				return 'NA,NA'
@@ -124,62 +166,71 @@ class Cell_scraper:
 		else:
 			return 'NA,NA'
 
-	##########	
-	#Function#				TODO FIGURE OUT WAY WE HAVE DUPLICATE YEARS
+	##########
+	#Function# ~ Searches through specific HTML tags known to contain the year of origin for a cell line.
 	##########
 	def grab_years(self , tag_type , url_page):
 		yrs = []
 		for tag in url_page.find_all(tag_type):
-			#Convert HTML to unicode then back to ascii form to filter out any unreadable characters				
+			#Filter out any unreadable characters that would prevent valid years to be searched and convert the HTML tag to a String.				
 			tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')  	
-			#Use regex to search through each HTML tag for years
-		
 			
-			#Add \. to LHS
-			
+			####################################################################################################			
+			#Uses a regular expresssion to search through each HTML tag for years in the following formats...
+			#	Any year that is...
+			#	-In the 1900s
+			#	-In the 2000s
+			#       -At the start of a line
+			#	-At the end of a line
+			#	-At the end of a sentence, for instance 1968.
+			#	-Surrounded in parentheses (1968)
+			#	-At the start or end of a HTML tag, for instance <p>1968</p>
+			#	-Has a semi colon following it 1968;
+			#	-And any combination of the above!
+			####################################################################################################
+
        			yrs += re.findall('[ ^ , \( , \s , \> ]19\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
 			yrs += re.findall('[ ^ , \( , \s , \> ]20\d{2}[ \) , \s , \. , ; , $ , \< ]' , str(tag_str))
 			
 		return yrs
 
 	###########
-	#Functions# ~ Scrape through HTML code for each cell line and grab the years 
-	###########
+	#Functions# ~ Opens up each cell line collection website for the cell line and uses the grab_years and grab_ethnicity function to grab the year of origin and  
+	###########   Ethnicity if it is available.
 	def grab_min_year_and_ethnicity(self,links):
 
-		if self.connection == True:
-
-			master_yr_list = []
-			ethnicity = 'NA'
-			for url in links:
+		if self.page_found == True:
 			
-				#Print url for testing	
-				#print url
+			#List to contian the min years from each web page
+			master_yr_list = []
+
+			#Variable that will contain the ethncity of the cell
+			ethnicity = 'NA'
+			
+			#For each valid cell line collection url, grab the ethnicity and the minimum year of origin if they are available. 
+			for url in links:
 				
-				#############################
-				#Grab min year and Ethnicity#
-				#############################
 				#Create list to store years and a String to store the ethnicity#
 				yrs = []
 	
-				#Skip Cell line collections that have no useful information
+				#List of cell line collection webiste urls that do not have any useful information relating to ethnicity or years. These are the bad urls.
 				bad_url = ['en.pasteur.ac' , 'clsgmbh' , 'ibvr.org' , 'kcb.kiz' , 'cellbank.snu.ac.kr' , 'coriell.org', 
 					  'www.fli.de/en/services', 'dtp.cancer.gov']
+				
+				#Boolean value that gets flipped if it turns out that the website has no useful data.
+	                        no_data = False  
 
-	                        is_bad = False
-
-				#Loop through list of bad urls
+				#Check if the cell line collection web page is one of the bad urls.
 				for url_str in bad_url:
-					#If this is a bad url then flip url flag
-					if url_str in url:
-						is_bad = True
+					if url_str in url:	
+						no_data = True
 						break
 
-				#If bad url flag was tripped then skip to the end of the loop.
-				if is_bad is True:
+				#If if the cell line collection has no useful data then skip it.
+				if no_data is True:
 					continue
 			
-				#Prevents program from crashing if it opens up a private server.
+				#If there is some issue in connecting to tha page then skip this cell line collection.
 				try:
 			        	url_req = requests.request('GET', url)
 				except requests.exceptions.SSLError:
@@ -189,14 +240,17 @@ class Cell_scraper:
 				#Grab HTML from the page, prepare lists for years
        				url_page = BeautifulSoup(url_req.content,'html.parser')
 
-				#Depending on the cell line collection, search ONLY in the tags where years amd ethnicity related to cell
+				#Depending on the cell line collection website, search ONLY in the tags where years amd ethnicity related to cell
 				#line can be found.
 
-				#Scrape for the cells ethnicity
+				#TODO add case for - https://www.aidsreagent.org/reagentdetail.cfm?t=cell_lines&id=322
+
+
+				#Search for the cells ethnicity
 				if 'brc.riken' in url:
 					ethnicity = self.grab_ethnicity(url_page, ethnicity)
 
-			        #Scrape years from <span> tags
+			        #Search years from <span> tags
 				if 'www.phe-culturecollections.org' in url:
 					#Search for years
 					yrs += self.grab_years('span' , url_page)	
@@ -204,7 +258,7 @@ class Cell_scraper:
 					#Search for ethnicity
 					ethnicity = self.grab_ethnicity(url_page , ethnicity)
 					
-				#Scrape years from <dd> tags
+				#Search years from <dd> tags
 				if 'dsmz.de/catalogues' in url:
 					#Search for years
 					yrs += self.grab_years('dd' , url_page)	
@@ -212,7 +266,7 @@ class Cell_scraper:
 					#Search for ethnicity
 					ethnicity = self.grab_ethnicity(url_page , ethnicity)
 					
-				#Scrape years from <p> tags	
+				#Search years from <p> tags	
 				if 'www.atcc.org' in url or 'www.addexbio.com' in url:
 					#Search for years
 					yrs += self.grab_years('p' , url_page)	
@@ -220,7 +274,7 @@ class Cell_scraper:
 					#Search for ethnicity
 					ethnicity = self.grab_ethnicity(url_page , ethnicity)
 					
-				#scrape years from <td> tags
+				#Search years from <td> tags
 				if 'www.atcc.org' in url or 'catalog.bcrc.firdi.org' in url or 'iclc.it/details' in url or 'http://cellbank.nibiohn.go.jp' in url or 'idac.tohoku.ac' in url:	
 					#Search for years
 					yrs += self.grab_years('td' , url_page)	
@@ -228,7 +282,7 @@ class Cell_scraper:
 					#Search for ethnicity
 					ethnicity = self.grab_ethnicity(url_page , ethnicity)
 					
-				#scrape years from <div> tags
+				#Search years from <div> tags
 				if 'http://bcrj.org.br' in url:
 					#Search for years
 					yrs += self.grab_years('div' , url_page)	
@@ -236,26 +290,29 @@ class Cell_scraper:
 					#Search for ethnicity
 					ethnicity = self.grab_ethnicity(url_page, ethnicity)			
 				
-			        #Convert elements of list from string -> int
-				yrs = map(self.sub_str, yrs)  			
+			        #Remove any characters surrounding that years.
+				yrs = map(self.sub_str, yrs)  
+				
+				#Convert each year to an in the minimum year can be found			
 				yrs = map(int, yrs)
 
 				#Print years fro testing
-				#print 'All of the years pulled from this page: '
-				#print yrs
+				print 'Years pulled from ' + str(url)
+				print yrs
 
 				#Append the minimum year if one exists
 			        if len(yrs) is not 0 :
 			                master_yr_list.append(min(yrs))
 				
-			#Print over all minimum year
+			#TODO REMOVE YEARS LESS THAN 1950
+
+			#Return the overll minimum year.
 			if len(master_yr_list) is not 0:
 			        return str(min(master_yr_list)) + ',' + str(ethnicity)
 			else:
 				return 'NA' + ',' + str(ethnicity)	
 		else:
 			return 'NA,NA'	
-
 
 	##########
 	#Function# 
@@ -264,7 +321,7 @@ class Cell_scraper:
 		#Types of possible ethinicites for cell lines.
 		categories = ['Caucasian' , 'caucasian' , 'Chinese' ,'chinese' , 'Japanese' , 'japanese' , 
 			      'Filipino' , 'filipino' , 'Korean' , 'korean' , 'Vietnamese', 'vietnamese',
-			      'African American' , 'african american']
+			      'African American' , 'african american' , 'Black' , 'black']
 		
 		#Search the entire HTML page for the ethnicity
 		#Convert HTML to unicode then back to ascii form to filter out any unreadable characters
@@ -289,48 +346,52 @@ def main():
 	# Acquire URL List #
 	####################
 	
-	# How to look up cell line data for cellosaurus by URL!!!
+	# Url template used to search for specific cell line on the Expasy database 
 	# https://web.expasy.org/cgi-bin/cellosaurus/search?input=your_query	
 
-	#Print out the column titles in csv format
-	print 'Cell.line.name,Synonyms,Sex,Age,Minimun.pub.med.year,Minimum.cell.line.collection.year,Ethnicity'
-
-	#Opening a the cell_lines xcell spread sheet
-	with open('lunc_cells.csv') as csvfile:
+	#Open a csv file containing the names of all the spread sheets
+	with open('cell_lines.csv') as csvfile:
+		
+		#Make a csv reader
 		reader = csv.DictReader(csvfile)
 		
-		#Query template
+		#String that contains the url template to search for a specific cell ine on the Expasy database.
 		query_url = 'https://web.expasy.org/cgi-bin/cellosaurus/search?input='
 	
-		#List to contain the queries
+		#A list to contain all of the URLs for searching each cell line.
 		query_list = []
-
-		#Make a query for each cell line and add it to the query list
+		
+		#For each cell line primary name that was scanned by the reader, a url to search for that cell line is created and then  
 		for row in reader:
                 	query_list.append(query_url + row['Cell line primary name'])
 
-		#Print basic info for each cell
-		iteration = 1
+		#The row number of the cell line in the spread sheet.
+		index = 1
+		
 		for query in query_list:
 			obj = Cell_scraper(query)
-			#Print out in csv format
-			print obj.table_look_up('Cell line name') + ',' + obj.table_look_up('Synonyms') + ',' + obj.table_look_up('Sex of cell') + ',' + obj.table_look_up('Age at sampling') + ',' + obj.min_pub_yr() + ',' + obj.scrape_clc() 
+	
+			#Prints out data in a csv format.
+
+			#print obj.table_look_up('Cell line name') + ',' + obj.table_look_up('Synonyms') + ',' + obj.table_look_up('Sex of cell') + ',' + obj.table_look_up('Age at sampling') + ',' + obj.min_pub_yr() + ',' + obj.scrape_clc()
 			
-			#print '__________' + str(iteration) + '__________'
-			#print obj.table_look_up('Cell line name')
-			#print obj.table_look_up('Synonyms')
-			#print obj.table_look_up('Sex of cell')
-			#print obj.table_look_up('Age at sampling')
-			#print obj.min_pub_yr()
-			#print obj.scrape_clc()
-			#iteration += 1	
+
+			#Prints out data in a more readable format 
+
+			print '__________' + str(index) + '__________'
+			print obj.table_look_up('Cell line name')
+			print obj.table_look_up('Synonyms')
+			print obj.table_look_up('Sex of cell')
+			print obj.table_look_up('Age at sampling')
+			print obj.min_pub_yr()
+			print obj.search_cell_line_collections()
+			index += 1	
+
 #############
 #Run Program#
 #############				
 if __name__ == '__main__':
 	main()
-
-#TEST - FIX IT SO WE CAN PULL FROM <TD> TAGS FROM ATTC PAGES
 
 #TODO - Find a way to determine what cell line it came from.
 	#Use a dictionary some how...
@@ -346,26 +407,4 @@ if __name__ == '__main__':
 #page = BeautifulSoup(req.content, 'html.parser')
 #print page
 #lst = []
-
-#for tag in page.find_all('p'):
-#	tag_str = unicodedata.normalize('NFKD', unicode(tag)).encode('ascii' , 'ignore')	
-#	print tag_str
-
-#	lst += re.findall('[ ^ , \( , \s , > ]19\d{2}[ \) , \s , \. , ; , \Z , <]' , str(tag_str))
-#	lst += re.findall('[ ^ , \( , \s , > ]20\d{2}[ \) , \s , \. , ; , \Z , <]' , str(tag_str))
-
-
-#print lst
-
-'''
-test_str = 'Baillie-Johnson H, Twentyman PR, Fox NE, Walls GA, Workman P, Watson JV, Johnson N, Reeve JG, Bleehen NM.1985. Establishment and characterisation of cell lines from patients with lung cancer (predominantly small cell carcinoma). Br J Cancer. 52(4):495-504 PMID: 2998422; Cancer Genet Cytogenet 1988;30:212'
-
-lst = []
-lst += re.findall('[ ^ , \( , \s , \. ,  >]19\d{2}[ \) , \s , \. , ; , \Z , <]' , test_str)
-
-print test_str
-print lst
-'''
-
-
 
