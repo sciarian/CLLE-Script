@@ -99,7 +99,6 @@ class Cell_scraper:
         # @Return A string containing the lowest year from the publication section, otherwise it returns 'NA'
         #        
 	######################################################################################################
-
 	def min_pub_yr(self):	
 		if self.page_found == True:
 			#Search for all years in the publication page
