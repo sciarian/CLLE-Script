@@ -141,11 +141,7 @@ class Cell_scraper:
         # @Return A string containing the lowest year from the publication section, otherwise it returns 'NA'.
         #        
 	######################################################################################################
-<<<<<<< HEAD
 	def search_pub_yr(self):	
-=======
-	def min_pub_yr(self):	
->>>>>>> origin
 		if self.page_found == True:
 			#Search for all years in the publication page
 			yrs = []		
