@@ -332,6 +332,7 @@ class Cell_scraper:
 					ethnicity = self.grab_ethnicity(url_page , ethnicity)
 					
 				#Search years and ethnicity from <td> tags
+				#TODO specify where ethncity is searched from only in this case do to issues with cellbank.nibiohn
 				if 'www.atcc.org' in url or 'catalog.bcrc.firdi.org' in url or 'iclc.it/details' in url or 'http://cellbank.nibiohn.go.jp' in url or 'idac.tohoku.ac' in url:	
 					#Search for years
 					yrs += self.grab_years('td' , url_page)	
@@ -372,7 +373,7 @@ class Cell_scraper:
 			self.ethnicity = ethnicity
 
 	###############################################################################
-	#
+	#               
 	# This function will search for the ethnicity of the cell line in on of the
 	# cell line collection pages that contains information for the cell line.
 	#
