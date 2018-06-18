@@ -465,39 +465,15 @@ def main():
 			#Search for data for the cell line	
 			obj.grab_clc_links()			
 			obj.search_clc_pages()	
-<<<<<<< HEAD
 			obj.search_pub_yr()					
 			obj.search_for_sex()		
 			obj.search_for_age()	
 			obj.search_for_primary_name()	
 			obj.search_for_alias()	
-=======
-			#obj.search_pub_yr()					
-			#obj.search_for_sex()		#FIX ME prints NA
-			#obj.search_for_age()		#FIX ME pints NA
-			#obj.search_for_primary_name()	
-			#obj.search_for_alias()		#FIX ME prints NA
-
+			
 			#Print data in a csv format.		Test
 			print obj.primary_name + ',' + obj.aliases + ',' + obj.sex + ',' + obj.age + ',' + obj.ethnicity + ',' + obj.pub_yr + ',' + obj.og_yr
-			print obj.ethnicity
-			
-			
-			#Print data for debugging.		Test	
-			print 'Primary name: ' + obj.primary_name
-			print 'Synonyms: ' + obj.aliases
-			print 'Sex: ' + obj.sex
-			print 'Age: ' + obj.age
-			print 'Ethnicity: ' + obj.ethnicity
-			print 'Min pub year: ' + obj.pub_yr
-			print 'Min origin year: ' + obj.og_yr
-			#Prints out data in a csv format.
-		
-			#print obj.table_look_up('Cell line name') + ',' + obj.table_look_up('Synonyms') + ',' + obj.table_look_up('Sex of cell') + ',' + obj.table_look_up('Age at sampling') + ',' + obj.min_pub_yr() + ',' + obj.scrape_clc()
-			
 
-			#Prints out data in a more readable format 
->>>>>>> origin/master
 
 			#Print data in a csv format.
 			print obj.primary_name + ',' + obj.aliases + ',' + obj.sex + ',' + obj.age + ',' + obj.ethnicity + ',' + obj.pub_yr + ',' + obj.og_yr + ',' + obj.og_yr_url + ',' + obj.eth_url
