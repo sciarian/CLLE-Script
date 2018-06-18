@@ -384,6 +384,7 @@ class Cell_scraper:
 	#
 	##############################################################################
 	def grab_ethnicity(self, clc_page, current_cell_eth):
+		#TODO add tag type to parameters to reduce chance of error.
 		#Types of possible ethinicites for cell lines.
 		categories = ['Caucasian' , 'caucasian' , 'Chinese' ,'chinese' , 'Japanese' , 'japanese' , 
 			      'Filipino' , 'filipino' , 'Korean' , 'korean' , 'Vietnamese', 'vietnamese',
