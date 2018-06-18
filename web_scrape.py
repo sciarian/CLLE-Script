@@ -105,7 +105,7 @@ class Cell_scraper:
 	# This function uses the table_look_up() function to grab the sex of the cell line.
 	# 
 	###################################################################################
-	def search_for_sex(self):								#TODO change to M or F format
+	def search_for_sex(self):								#TODO change to M and F
 		self.sex = self.table_look_up('Sex of cell')
 	
 	###################################################################################
@@ -168,11 +168,11 @@ class Cell_scraper:
         #
 	# @Return A string with the first and last character removed.
 	# 
-	############################################################################################################
+	#############################################################################################################
 	def str_trim(self,str):
 		return str[1:len(str)-1]
 	
-	#################################################################################################################
+	#####################################################################################################################
 	#
 	# If a page for the cell line was found, this function goes to the cell line collection portion of the current 
 	# cell lines expasy page and appends the urls of the all the cell line collections web pages to a list and passes 
@@ -181,7 +181,7 @@ class Cell_scraper:
 	#
 	# @Return A string with the ethnicity and year of origin.
 	#
-	################################################################################################################# 
+	#################################################################################################################### 
 	def grab_clc_links(self):
 		if self.page_found == True:		
 			#Return message
@@ -198,9 +198,9 @@ class Cell_scraper:
 						clc = row
 						break
 
-			#If there is no cell line collection, then go return NA,NA for ethnicity and year of origin	
+			#If there is no cell line collection then return	
 			if clc == '':
-				return 'NA,NA'
+				return
 	
 			#If there are cell line collections that reference the cell line, then put the url's to those  
 			#web pages into a list.
@@ -208,8 +208,7 @@ class Cell_scraper:
 			for link in clc.find_all('a'):
 				#print link.string
 				self.clc_links.append(link['href'])
-		
-
+				
 	#########################################################################################################
 	#
 	# This funtion searches through specific HTML tags known to contain the year of origin for a cell line in
@@ -302,12 +301,8 @@ class Cell_scraper:
 				#Grab HTML from the page, prepare lists for years
        				url_page = BeautifulSoup(url_req.content,'html.parser')
 
-				#Depending on the cell line collection website, search ONLY in the tags where years amd ethnicity related to cell
-				#line can be found.
-
 				#TODO add case for - https://www.aidsreagent.org/reagentdetail.cfm?t=cell_lines&id=322
-
-
+				
 				#Search for the cells ethnicity
 				if 'brc.riken' in url:
 					ethnicity = self.grab_ethnicity(url_page, ethnicity)
@@ -422,23 +417,17 @@ def main():
 		
 		#Make a csv reader
 		reader = csv.DictReader(csvfile)
-	
-		#print 'NOTHING'
-	
+		
 		#String that contains the url template to search for a specific cell ine on the Expasy database.
 		query_url = 'https://web.expasy.org/cgi-bin/cellosaurus/search?input='
 	
-		#A list to contain all of the URLs for searching each cell line.
+		#A list to contain all of the URLs that lead to the search results for each cell line on the expasy search page.
 		query_list = []
 		
-		#For each cell line primary name that was scanned by the reader, a url to search for that cell line is created and then  
+		#For each cell line primary name that was scanned by the reader, a url to search for that cell line is created and then.  
 		for row in reader:
-			#print row['Cell line primary name'] 
                 	query_list.append(query_url + row['Cell line primary name'])
-
-
-		#TODO double check all of the cell line primary names line up by printing them out in a csv doc and checking all of them by hand
-
+			
 		#The row number of the cell line in the spread sheet.
 		index = 1
 		
@@ -454,15 +443,21 @@ def main():
 			#obj.search_for_primary_name()	
 			#obj.search_for_alias()		#FIX ME prints NA
 
-			#Print data in a csv format.		TODO
-			#print obj.primary_name + ',' + obj.aliases + ',' + obj.sex + ',' + obj.age + ',' + obj.ethnicity + ',' + obj.pub_yr + ',' + obj.og_yr
-
+			#Print data in a csv format.		Test
+			print obj.primary_name + ',' + obj.aliases + ',' + obj.sex + ',' + obj.age + ',' + obj.ethnicity + ',' + obj.pub_yr + ',' + obj.og_yr
 			print obj.ethnicity
-	
-			#Print data for debugging.		TODO
 			
+			
+			#Print data for debugging.		Test	
+			print 'Primary name: ' + obj.primary_name
+			print 'Synonyms: ' + obj.aliases
+			print 'Sex: ' + obj.sex
+			print 'Age: ' + obj.age
+			print 'Ethnicity: ' + obj.ethnicity
+			print 'Min pub year: ' + obj.pub_yr
+			print 'Min origin year: ' + obj.og_yr
 			#Prints out data in a csv format.
-
+		
 			#print obj.table_look_up('Cell line name') + ',' + obj.table_look_up('Synonyms') + ',' + obj.table_look_up('Sex of cell') + ',' + obj.table_look_up('Age at sampling') + ',' + obj.min_pub_yr() + ',' + obj.scrape_clc()
 			
 
