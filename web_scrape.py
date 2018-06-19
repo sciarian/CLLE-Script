@@ -48,6 +48,8 @@ class Cell_scraper:
 	####################################################################################
 	def __init__(self, url):
 
+		
+
 		#Make HTTP request
 		req = requests.request('GET', url)
 
@@ -71,8 +73,15 @@ class Cell_scraper:
 		#of the functions for grabbing data can be used.
 		else:
 			self.page_found = False
+			
+		'''					#USED TO PROCESS A LIST OF URLS#
+		req = requests.request('GET', url)         
+                self.page = BeautifulSoup(req.content, 'html.parser')
+                self.page_found = True   		
+		'''		
 
 		#Initialize data fields for the cell line collection
+		self.accession = 'NA'
 		self.primary_name = 'NA'
 		self.aliases = 'NA'
 		self.sex = 'NA'
@@ -99,8 +108,18 @@ class Cell_scraper:
 			for row in self.page.find_all('tr'):
 				if str(row.th) != 'None':
 					if str(row.th.string) == table_row:
-						return row.td.contents[0].string
+						return str(row.td.contents[0].string)
 			return 'NA'
+		else:
+			return 'NA'
+
+	#############################################################################
+	#
+	# This function uses the table_took_up() to accession data for the cell line.
+	#
+	#############################################################################
+	def search_for_accession(self):
+		self.accession = self.table_look_up('Accession')
 
 	###################################################################################
 	#
@@ -123,8 +142,8 @@ class Cell_scraper:
 	#
 	###################################################################################
 	def search_for_age(self):								
-		self.age = self.table_look_up('Age at sampling')
-		self.age = self.age.replace('Y',' ')
+		age = self.table_look_up('Age at sampling')
+		self.age = age.replace('Y',' ')
 
 	############################################################################################
 	#
@@ -438,6 +457,8 @@ def main():
 
 	# Url template used to search for specific cell line on the Expasy database 
 	# https://web.expasy.org/cgi-bin/cellosaurus/search?input=your_query	
+	
+	
 
 	#Open a csv file containing the names of all the spread sheets
 	with open('cell_lines.csv') as csvfile:
@@ -457,27 +478,31 @@ def main():
 			
 		#The row number of the cell line in the spread sheet.
 		index = 1
+		
+	
+	'''
+	query_list = ['https://web.expasy.org/cellosaurus/CVCL_1097','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']
+	'''	
+	
+	print 'Cell.Primary.Name,Aliases,Sex,Age,Ethnicity,Min.Pub.Year,Min.Clc.Year,Clc.Year.Url,Eth.Url'
+	for query in query_list:
+		obj = Cell_scraper(query)
 
-		print 'Cell.Primary.Name,Aliases,Sex,Age,Ethnicity,Min.Pub.Year,Min.Clc.Year,Clc.Year.Url,Eth.Url'
-		for query in query_list:
-			obj = Cell_scraper(query)
-
-			#Search for data for the cell line	
-			obj.grab_clc_links()			
-			obj.search_clc_pages()	
-			obj.search_pub_yr()					
-			obj.search_for_sex()		
-			obj.search_for_age()	
-			obj.search_for_primary_name()	
-			obj.search_for_alias()	
+		#Search for data for the cell line	
+		obj.search_for_accession()
+		#obj.grab_clc_links()			
+		#obj.search_clc_pages()	
+		#obj.search_pub_yr()					
+		#obj.search_for_sex()		
+		#obj.search_for_age()	
+		#obj.search_for_primary_name()	
+		#obj.search_for_alias()	
 			
-			#Print data in a csv format.		Test
-			print obj.primary_name + ',' + obj.aliases + ',' + obj.sex + ',' + obj.age + ',' + obj.ethnicity + ',' + obj.pub_yr + ',' + obj.og_yr
+		#Print data in a csv format.
+		#print obj.primary_name + ',' + obj.aliases + ',' + obj.sex + ',' + obj.age + ',' + obj.ethnicity + ',' + obj.pub_yr + ',' + obj.og_yr + ',' + obj.og_yr_url + ',' + obj.eth_url
+		print obj.accession		
 
-
-			#Print data in a csv format.
-			print obj.primary_name + ',' + obj.aliases + ',' + obj.sex + ',' + obj.age + ',' + obj.ethnicity + ',' + obj.pub_yr + ',' + obj.og_yr + ',' + obj.og_yr_url + ',' + obj.eth_url
-
+	
 #############
 #Run Program#
 #############				
